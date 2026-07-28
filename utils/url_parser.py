@@ -1,4 +1,5 @@
-from urllib.parse import urlparse, parse_qs
+from urllib.parse import parse_qs, urlparse
+
 
 def extract_video_id(url_or_id: str) -> str:
     # Already a video ID

@@ -1,22 +1,48 @@
-from youtube_transcript_api import YouTubeTranscriptApi, TranscriptsDisabled
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_ollama import ChatOllama, OllamaEmbeddings
-from langchain_community.vectorstores import FAISS
-from utils.url_parser import extract_video_id
+from yaspin import yaspin
 
-
-    # Step 1a - Indexing(Document Ingestion)
+from rag.chains import build_rag_chain
+from rag.indexing import build_vector_store
+from rag.ingestion import load_transcript
+from rag.models import get_embeddings, get_llm
+from rag.prompts import prompt
 
 url = input("Enter YouTube URL: ")
-video_id = extract_video_id(url)
-try:
-    transcript_list = YouTubeTranscriptApi().fetch(
-        video_id,
-        languages=['en','hi']
-    )
-    transcript = " ".join(snippet.text for snippet in transcript_list)
-    print(transcript)
-except TranscriptsDisabled:
-    print("Transcripts are disabled for this video.")
 
-    # Step 1b - Indexing(Text Splitting)
+with yaspin(text="Loading transcript..."):
+    transcript = load_transcript(url)
+
+with yaspin(text="Creating embeddings and vector store..."):
+    embeddings = get_embeddings()
+
+    vector_store = build_vector_store(
+        transcript,
+        embeddings,
+    )
+
+retriever = vector_store.as_retriever(
+    search_type="similarity",
+    search_kwargs={"k": 3},
+)
+
+llm = get_llm()
+
+chain = build_rag_chain(
+    retriever,
+    prompt,
+    llm,
+)
+
+while True:
+    question = input("\nAsk a question: ")
+
+    if question.lower() == "exit":
+        break
+        
+    if not question.strip():
+        continue
+    
+    print("\nAnswer: ")
+    
+    for chunk in chain.stream(question):
+        print(chunk.content, end='', flush=True)
+    print() 

@@ -12,6 +12,8 @@
         "langchain-text-splitters>=1.1.2",
         "ollama>=0.6.2",
         "python-dotenv>=1.2.2",
+        "ruff>=0.16.0",
         "tiktoken>=0.13.0",
+        "yaspin>=3.4.0",
         "youtube-transcript-api>=1.2.4",
 ]
